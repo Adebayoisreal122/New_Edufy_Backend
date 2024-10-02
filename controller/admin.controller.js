@@ -12,22 +12,31 @@ const generateadminId = () => {
 }
 
 
-const adminRegister = (req, res) =>{
-    let adminId = generateadminId()
-    const otp = generateOTP()
+const adminRegister = (req, res) => {
+    let adminId = generateadminId();
+    const otp = generateOTP();
     const otpExpiration = new Date(Date.now() + 30 * 60 * 1000);
     const staff = new admin({ ...req.body, adminId, otp, otpExpiration });
 
     const { email } = req.body;
     staff.save()
-    .then((result)=>{
-        console.log("admin info saved successfully");
+    .then((result) => {
+        console.log("Admin info saved successfully");
+        
         sendUniqueNumberToEmail(email, adminId)
-        res.status(201).send({ message: "admin registered successfully", status: 200 });
-    }).catch((err)=>{
-        console.log("Information not saved");
+        .then(() => {
+            res.status(201).send({ message: "Admin registered successfully", status: 200 });
+        })
+        .catch((err) => {
+            console.error("Failed to send email:", err);
+            res.status(500).send({ message: "Admin registered, but failed to send email", status: 500 });
+        });
     })
-}
+    .catch((err) => {
+        console.error("Information not saved:", err);
+        res.status(500).send({ message: "Admin registration failed", status: 500 });
+    });
+};
 
 const sendUniqueNumberToEmail = (email, adminId) => {
     return new Promise((resolve, reject) => {
@@ -35,60 +44,66 @@ const sendUniqueNumberToEmail = (email, adminId) => {
             service: 'gmail',
             auth: {
                 user: 'adebayooluwaferanmi112@gmail.com',
-                pass: 'saxd eqqo ikek gelu'
+                pass: 'saxd eqqo ikek gelu' 
             }
         });
 
         const mailOptions = {
-            from: 'adeyeriseun10@gmail.com',
+            from: 'adebayooluwaferanmi112@gmail.com',
             to: email,
             subject: 'Edufy Admin Unique ID',
             text: `Your Unique Admin ID is: ${adminId}`
         };
-    
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 console.error('Error occurred:', error);
+                reject(error); // Reject the promise on error
             } else {
                 console.log('Email sent successfully!');
                 console.log('Message sent: %s', info.messageId);
                 console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-              
+                resolve(info); // Resolve the promise on success
             }
         });
     });
-}
-
-
-
-
-const adminLogin = (req, res) => {
-    const { email, password } = req.body;
-
-    // Find admin by email
-    admin.findOne({ email })
-    .then(staff => {
-        if (!staff) {
-            return res.status(404).send({ message: "Admin not found", status: 404 });
-        }
-
-        // Check if the password is correct (assuming password is stored and needs to be hashed)
-        if (staff.password === password) {
-            // Optionally, generate a token
-            // const token = generateToken(admin);
-
-            res.status(200).send({ message: "Login successful", status: 200, adminId: staff.adminId });
-        } else {
-            res.status(401).send({ message: "Incorrect password", status: 401 });
-        }
-    })
-    .catch(err => {
-        console.error("Error during login", err);
-        res.status(500).send({ message: "Internal server error", status: 500 });
-    });
 };
 
+
+
+
+// In your backend (user.controller.js)
+const adminLogin = (req, res) => {
+    const { adminId, password } = req.body;
+
+    // Find admin by adminId
+    admin.findOne({ adminId })
+        .then(staff => {
+            if (!staff) {
+                return res.status(404).send({ message: "Admin not found", status: 404 });
+            }
+
+            // Check if the password is correct
+            bcrypt.compare(password, staff.password, (err, isMatch) => {
+                if (err) {
+                    return res.status(500).send({ message: "Internal server error", status: 500 });
+                }
+
+                if (isMatch) {
+                    // Generate a token if needed
+                    const token = jwt.sign({ id: staff._id }, process.env.SECRET, { expiresIn: '1h' });
+
+                    res.status(200).send({ message: "Login successful", status: 200, token, adminId: staff.adminId });
+                } else {
+                    res.status(401).send({ message: "Incorrect password", status: 401 });
+                }
+            });
+        })
+        .catch(err => {
+            console.error("Error during login", err);
+            res.status(500).send({ message: "Internal server error", status: 500 });
+        });
+};
 
 
 
@@ -115,15 +130,15 @@ const sendOTPToEmail = (email, otp) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'adeyeriseun10@gmail.com',
-                pass: 'xwmb exbg izak jkvm'
+                user: 'adebayooluwaferanmi112@gmail.com',
+                pass: 'saxd eqqo ikek gelu'
             }
         });
 
         const mailOptions = {
-            from: 'adeyeriseun10@gmail.com',
+            from: 'adebayooluwaferanmi112@gmail.com',
             to: email,
-            subject: 'Learnify forgotten pasword OTP',
+            subject: 'Edufy forgotten pasword OTP',
             text: `Your one time password OTP is : ${otp}
 This OTP is valid for 30 minutes. Please do not share this OTP with anyone.
             `
@@ -167,6 +182,27 @@ const forgotten = (req, res) => {
         res.status(500).json({ error: 'Database error' });
     });
 }
+
+
+
+
+const getAdminDetails = (req, res) => {
+    const { adminId } = req.params;
+
+    admin.findOne({ adminId })
+        .then(staff => {
+            if (!staff) {
+                return res.status(404).send({ message: "Admin not found", status: 404 });
+            }
+
+            res.status(200).send({ message: "Admin details fetched successfully", status: 200, data: staff });
+        })
+        .catch(err => {
+            console.error("Error fetching admin details", err);
+            res.status(500).send({ message: "Internal server error", status: 500 });
+        });
+};
+
 
 
 const verifyOTP = (req, res) => {
@@ -217,4 +253,4 @@ const createNewPassword = (req, res) => {
 
 
 
-module.exports = {adminRegister, adminLogin, verifyToken, forgotten, verifyOTP, createNewPassword}
+module.exports = {adminRegister, adminLogin, verifyToken, forgotten, verifyOTP, createNewPassword, getAdminDetails }

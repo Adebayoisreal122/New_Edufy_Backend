@@ -51,8 +51,8 @@ const sendUniqueNumberToEmail = (email, matricNumber) => {
         const mailOptions = {
             from: 'adebayooluwaferanmi112@gmail.com',
             to: email,
-            subject: 'Learnify Student Matric Number (S.M.N)',
-            text: `Your Student Matric Number (S.M.N) is : ${matricNumber}`
+            subject: 'Edufy Student Matric Number',
+            text: `Your Student Matric Number is : ${matricNumber}`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {

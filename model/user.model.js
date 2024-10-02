@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const URI = "mongodb+srv://adebayooluwaferanmi112:Isrealight112@cluster2.uezjk2x.mongodb.net/Edufy?retryWrites=true&w=majority&appName=Cluster2"
+const URI = "mongodb+srv://Newedufy:Isrealight112@cluster2.uezjk2x.mongodb.net/Newedufy?retryWrites=true&w=majority&appName=Cluster2"
 
 
 

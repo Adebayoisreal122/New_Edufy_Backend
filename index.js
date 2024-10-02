@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
-let PORT = 4000
+let PORT =  process.env.PORT || 4200
 const userRoutes = require('./routes/user.route')
 const adminRoutes = require('./routes/admin.route')
 
