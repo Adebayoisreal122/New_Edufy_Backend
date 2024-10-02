@@ -1,5 +1,5 @@
 const Student = require('../model/user.model');
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcryptjs")
 const nodemailer = require('nodemailer');
 require("dotenv").config()
 secret = process.env.SECRET
