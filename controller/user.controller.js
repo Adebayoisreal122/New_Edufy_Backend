@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs")
 const nodemailer = require('nodemailer');
 require("dotenv").config()
 secret = process.env.SECRET
-
 const jwt = require("jsonwebtoken")
 
 const generateUniqueNumber = () => {
@@ -89,7 +88,7 @@ const userLogin = (req, res) => {
                 } else {
                     const token = jwt.sign({ matricNumber }, secret, { expiresIn: '1h' });
                     console.log("User signed in successfully");
-                    res.send({ message: "User signed in successfully", status: true, user: student, token: token });
+                    res.send({ message: "User signed in successfully", status: true, student: student, token: token });
                 }
             });
         })
@@ -230,6 +229,34 @@ const createNewPassword = (req, res) => {
 
 
 const userDashboard = (req, res) => {
+
+const matricNumber = req.user.matricNumber;
+
+  
+
+        Student.findOne({ matricNumber })
+            .then((student) => {
+                if (!student) {
+                    return res.status(404).json({ message: "User not found" });
+                }
+
+               
+                const {  firstName, lastName, matricNumber, email } = student;
+
+
+
+               return res.status(200).json({
+                    message: "User dashboard loaded successfully",
+                    status: true,
+                    user:{ firstName, lastName, matricNumber, email }
+                });
+            })
+            .catch((error) => {
+                console.error("Error retrieving user:", error);
+               return res.status(500).json({ message: "Internal Server Error" });
+            });
+  
+
     let upcomingClasses = [
         {
             Course: "Software Engineering",
@@ -260,8 +287,9 @@ const userDashboard = (req, res) => {
             Location: "Room 304"
         }
 ]
-res.status(200).json({ message: "User Dashboard", upcomingClasses, });
+
 }
+
 
 
 
